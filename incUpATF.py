@@ -30,13 +30,18 @@ def copy_images(in_dir,out_dir):
 			if one_file.rfind(ext)!=-1 and one_file.rfind(ext)==len(one_file)-4:
 				# we found an image, copy it
 				shutil.copyfile(os.path.join(in_dir,one_file), os.path.join(out_dir,one_file))
+				#print ext,caffe_img_type
 				if ext!=caffe_img_type: # conversion needed
 					tmp_file=one_file.replace(ext,caffe_img_type)
-					command="convert "+os.path.join(out_dir,tmp_file)+" "+os.path.join(out_dir,tmp_file)
-					return_code = subprocess.call(command, shell=True)
-					downloaded.append(['',tmp_file])
+					command="convert "+os.path.join(out_dir,one_file)+" "+os.path.join(out_dir,tmp_file)
+					#print command
+					return_code_conv = sub.call(command, shell=True)
+					command="rm "+os.path.join(out_dir,one_file)
+                                        return_code = sub.call(command, shell=True)
+					if return_code_conv==0:
+						downloaded.append(('','',os.path.join(out_dir,tmp_file)))
 				else:
-					downloaded.append(['',one_file]) 
+					downloaded.append(('','',os.path.join(out_dir,one_file))) 
   return downloaded
 
 # Download functions
@@ -157,6 +162,7 @@ if __name__ == '__main__':
 		# Copy images to update dir
 		downloaded=copy_images(input_dir,up_dir)
 		step_times.append(time.time())
+		lastId=len(downloaded)
 	else:
 		quit() # for now quit, since there is no reference DB...
 		# get image URLs, ids, etc.
@@ -320,7 +326,10 @@ if __name__ == '__main__':
 	for i in range(0,len(unique_sha1)):
 		if unique_sha1[i] not in old_uniques:
 			img_item=readable_images[unique_idx[i]]
-			new_uniques.append((int(img_item[0]),img_item[1],img_item[3]))
+			if img_item[0]:
+				new_uniques.append((int(img_item[0]),img_item[1],img_item[3]))
+			else:
+				new_uniques.append((startid+i,startid+i,img_item[3]))
 			#new_id = new_id + 1
 			new_files.append(img_item[2])
 			unique_htid.append(new_uniques[-1][0])
