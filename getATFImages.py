@@ -4,7 +4,8 @@ import urllib2
 
 basepath="http://imagecat.dyndns.org/atf/images"
 outbasepath="/srv/skaraman/images_ATF"
-subfolder_list=["/","reddit-040815/"]
+#subfolder_list=["/","reddit-040815/"]
+subfolder_list=["/reddit-040815/"]
 accepted_img_types=[".jpg",".png",".gif"]
 
 for subfolder in subfolder_list:
