@@ -19,15 +19,15 @@ accepted_img_types=global_var['accepted_img_types']
 caffe_img_type=global_var['caffe_img_type']
 
 # Copy functions
-def copy_images(in_dir,out_dir)
-downloaded=[]
-for root, subdirs, files in os.walk(in_dir):
+def copy_images(in_dir,out_dir):
+  downloaded=[]
+  for root, subdirs, files in os.walk(in_dir):
 	for subdir in subdirs:
 	 	downloaded+=copy_images(os.path.join(in_dir,subdir),out_dir)
 
 	for one_file in files:
 		for ext in accepted_img_types:
-			if one_file.rfind(ext)!=-1 and one_file.rfind(ext)==len(one_file)-4
+			if one_file.rfind(ext)!=-1 and one_file.rfind(ext)==len(one_file)-4:
 				# we found an image, copy it
 				shutil.copyfile(os.path.join(in_dir,one_file), os.path.join(out_dir,one_file))
 				if ext!=caffe_img_type: # conversion needed
@@ -37,7 +37,7 @@ for root, subdirs, files in os.walk(in_dir):
 					downloaded.append(['',tmp_file])
 				else:
 					downloaded.append(['',one_file]) 
-return downloaded
+  return downloaded
 
 # Download functions
 def download_shell(args):
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 	input_dir = args.directory
 
 	if startid == 0:
-		db=MySQLdb.connect(host=localhost,user=localuser,passwd=localdb,db=localdb)
+		db=MySQLdb.connect(host=localhost,user=localuser,passwd=localpwd,db=localdb)
 		c=db.cursor()
 		c.execute('select htid from fullIds ORDER BY htid DESC limit 1;')
 		remax = c.fetchall()
@@ -156,6 +156,7 @@ if __name__ == '__main__':
 	if input_dir: # Update from directory
 		# Copy images to update dir
 		downloaded=copy_images(input_dir,up_dir)
+		step_times.append(time.time())
 	else:
 		quit() # for now quit, since there is no reference DB...
 		# get image URLs, ids, etc.
@@ -224,10 +225,10 @@ if __name__ == '__main__':
 	update_suffix = timestr+'_'+str(startid)+'_'+str(lastId)
 	print update_suffix
 	update_logs_path = os.path.join(update_path,'logs')
-    if not os.path.exists(update_logs_path):
-    	os.mkdir(update_logs_path)
-    update_logfilename = os.path.join(update_logs_path,update_suffix+'.log')
-    flog = open(update_logfilename,'w')
+    	if not os.path.exists(update_logs_path):
+    		os.mkdir(update_logs_path)
+    	update_logfilename = os.path.join(update_logs_path,update_suffix+'.log')
+    	flog = open(update_logfilename,'w')
 	
 	if not input_dir: # We downloaded images
 		flog.write('retrived %d image URLs' % num_url+'\n')
@@ -236,7 +237,7 @@ if __name__ == '__main__':
 		flog.write('downloaded %d images' % num_downloaded+'\n')
 		flog.write('Time for downloading images: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
 	else: 
-
+		flog.write('Update from directory. Copy took: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
 	# image integrity check
 	readable_images = []
 	integrity_path = os.path.join(update_path,'integrity_check')
