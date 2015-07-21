@@ -4,6 +4,7 @@ import MySQLdb
 import subprocess as sub
 import hashlib
 
+# Load global parameters
 import json
 global_var = json.load(open('global_var_all.json'))
 isthost=global_var['ist_db_host']
@@ -14,18 +15,38 @@ localhost=global_var['local_db_host']
 localuser=global_var['local_db_user']
 localpwd=global_var['local_db_pwd']
 localdb=global_var['local_db_dbname']
+accepted_img_types=global_var['accepted_img_types']
+caffe_img_type=global_var['caffe_img_type']
 
+# Copy functions
+def copy_images(in_dir,out_dir)
+downloaded=[]
+for root, subdirs, files in os.walk(in_dir):
+	for subdir in subdirs:
+	 	downloaded+=copy_images(os.path.join(in_dir,subdir),out_dir)
+
+	for one_file in files:
+		for ext in accepted_img_types:
+			if one_file.rfind(ext)!=-1 and one_file.rfind(ext)==len(one_file)-4
+				# we found an image, copy it
+				shutil.copyfile(os.path.join(in_dir,one_file), os.path.join(out_dir,one_file))
+				if ext!=caffe_img_type: # conversion needed
+					tmp_file=one_file.replace(ext,caffe_img_type)
+					command="convert "+os.path.join(out_dir,tmp_file)+" "+os.path.join(out_dir,tmp_file)
+					return_code = subprocess.call(command, shell=True)
+					downloaded.append(['',tmp_file])
+				else:
+					downloaded.append(['',one_file]) 
+return downloaded
+
+# Download functions
 def download_shell(args):
 	url = args[0]
 	filepath = args[1]
-	#tm_start = time.time()
 	if os.path.isfile(filepath):
-		#print time.time()-tm_start
 		return 1
 	else:
-		#tm_start = time.time()
 		down_success = download_image(url,filepath)
-		#print 'down time '+ str(time.time()-tm_start)
 		return down_success
 
 def download_image(url,filepath):
@@ -82,43 +103,31 @@ def download_image(url,filepath):
 		else:
 			return 1
 
+
 if __name__ == '__main__':
 	step_times = []
 	step_times.append(time.time())
 	timestr= time.strftime("%b-%d-%Y-%H-%M-%S", time.localtime(step_times[0]))
 
+	# parse input arguments
 	from argparse import ArgumentParser
-
 	parser = ArgumentParser(description='Incremental Update')
- 
 	parser.add_argument('-s','--startid',default=0,
                         help='''Manually providing starting memex image id for update''')
 	parser.add_argument('-e','--endid',default=0,
                         help='''Manually providing ending memex image id for update''')
-
-	# limiters
 	parser.add_argument('-l','--limit',default=100000,type=int,
                         help='''Max number of images to download
                                 (Default: 100,000)''')
-
 	parser.add_argument('-d','--directory',default='',type=str,
                         help='''Input directory''') 
-  
-	# parse input arguments
 	args = parser.parse_args()
-
 	limit = args.limit
 	startid = args.startid
 	endid = args.endid
 	input_dir = args.directory
 
-
-	
-	print input_dir
-	quit()
-
 	if startid == 0:
-		# TODO put these login info somewhere else 
 		db=MySQLdb.connect(host=localhost,user=localuser,passwd=localdb,db=localdb)
 		c=db.cursor()
 		c.execute('select htid from fullIds ORDER BY htid DESC limit 1;')
@@ -139,89 +148,94 @@ if __name__ == '__main__':
 		
 	if not os.path.exists(update_image_cache):
 		os.mkdir(update_image_cache)
-	# get image URLs, ids, etc.
-	db=MySQLdb.connect(host=isthost,user=istuser,passwd=istpwd,db=istdb)
-	c=db.cursor()
-	# sql='select id,location,importtime  from images where importtime >= DATE_FORMAT(''%s'', ''%s'') and location is not null order by importtime asc'
-	# query_time = ['2015-04-13 15:00:00','%Y-%m-%d %H:%i:%s']
-	# start_time = time.time()
-	# c.execute(sql, query_time)
-	#print "--- %s seconds ---" % (time.time() - start_time)
+	up_dir=os.path.join(update_image_cache,str(startid))
+	if not os.path.isdir(up_dir):
+		os.mkdir(up_dir)
 
-	sql='select id,location from images where id > ' + str(startid) + endid_str+' and location is not null order by id asc limit ' + str(limit)
-	query_id = []
-	start_time = time.time()
-	c.execute(sql, query_id)
-	print "query database: %s seconds ---" % (time.time() - start_time)
-
-	re = c.fetchall()
-	db.close()
-	if len(re)<limit:
-		print "Not enough images. Exiting"
-		sys.exit("Error: Not enough images.")
-	if len(re)>0:
-		lastId=int(re[-1][0])
+	print input_dir
+	if input_dir: # Update from directory
+		# Copy images to update dir
+		downloaded=copy_images(input_dir,up_dir)
 	else:
-		lastId = startid
+		quit() # for now quit, since there is no reference DB...
+		# get image URLs, ids, etc.
+		db=MySQLdb.connect(host=isthost,user=istuser,passwd=istpwd,db=istdb)
+		c=db.cursor()
+		sql='select id,location from images where id > ' + str(startid) + endid_str+' and location is not null order by id asc limit ' + str(limit)
+		query_id = []
+		start_time = time.time()
+		c.execute(sql, query_id)
+		print "query database: %s seconds ---" % (time.time() - start_time)
+		re = c.fetchall()
+		db.close()
+		if len(re)<limit:
+			print "Not enough images. Exiting"
+			sys.exit("Error: Not enough images.")
+		if len(re)>0:
+			lastId=int(re[-1][0])
+		else:
+			lastId = startid
+
+		num_url = len(re)
+		print 'retrived %d image URLs' % num_url
+		# remove existing ones
+		retrived_ids = [int(img_item[0]) for img_item in re]
+		db=MySQLdb.connect(host=localhost,user=localuser,passwd=localpwd,db=localdb)
+		c=db.cursor()
+		sql='SELECT htid FROM fullIds WHERE htid in (%s);' 
+		in_p=', '.join(map(lambda x: '%s', retrived_ids))
+		sqlq = sql % (in_p)
+		c.execute(sqlq, retrived_ids)
+		existing_ids = c.fetchall()
+		db.close()
+		existing_ids=[int(i[0]) for i in existing_ids]
+		imglist = [img_item for img_item in re if int(img_item[0]) not in existing_ids]
+		num_ex = len(imglist)
+		print 'after remove existing: %d image URLs' % num_ex
+        
+		step_times.append(time.time())
+		print 'Time for getting urls: ', str(step_times[-1]-step_times[-2]), 'seconds'
+
+		# download images
+		pool = multiprocessing.Pool(10)
+		download_arg=[];
+		for img_item in re:
+			url = img_item[1]
+			name = url.split('/')[-1]
+			filepath = os.path.join(update_image_cache,str(startid),name)
+			download_arg.append([url,filepath])
+
+		download_indicator=pool.map(download_shell, download_arg)
+		downloaded = []
+		for i in range(0,len(re)):
+			if download_indicator[i]:
+				downloaded.append(re[i]+(download_arg[i][1],))
+
+		num_downloaded = len(downloaded)
+		print 'downloaded %d images' % num_downloaded
+        
+		if not num_downloaded:
+			exit(-1)
+
+		step_times.append(time.time())
+		print 'Time for downloading images: ', str(step_times[-1]-step_times[-2]), 'seconds'
+
 
 	update_suffix = timestr+'_'+str(startid)+'_'+str(lastId)
 	print update_suffix
-        update_logs_path = os.path.join(update_path,'logs')
-        if not os.path.exists(update_logs_path):
-                os.mkdir(update_logs_path)
-        update_logfilename = os.path.join(update_logs_path,update_suffix+'.log')
-        flog = open(update_logfilename,'w')
-
-	num_url = len(re)
-	print 'retrived %d image URLs' % num_url
-	flog.write('retrived %d image URLs' % num_url+'\n')
-	# remove existing ones
-	retrived_ids = [int(img_item[0]) for img_item in re]
-	db=MySQLdb.connect(host=localhost,user=localuser,passwd=localpwd,db=localdb)
-	c=db.cursor()
-	sql='SELECT htid FROM fullIds WHERE htid in (%s);' 
-	in_p=', '.join(map(lambda x: '%s', retrived_ids))
-	sqlq = sql % (in_p)
-	c.execute(sqlq, retrived_ids)
-	existing_ids = c.fetchall()
-	db.close()
-	existing_ids=[int(i[0]) for i in existing_ids]
-	imglist = [img_item for img_item in re if int(img_item[0]) not in existing_ids]
-	num_url = len(imglist)
-	print 'after remove existing: %d image URLs' % num_url
-        flog.write('after remove existing: %d image URLs' % num_url+'\n')
-
-	step_times.append(time.time())
-	print 'Time for getting urls: ', str(step_times[-1]-step_times[-2]), 'seconds'
-	flog.write('Time for getting urls: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
-
-	# download images
-	pool = multiprocessing.Pool(10)
-	download_arg=[];
-	if not os.path.isdir(os.path.join(update_image_cache,str(startid))):
-		os.mkdir(os.path.join(update_image_cache,str(startid)))
-	for img_item in re:
-		url = img_item[1]
-		name = url.split('/')[-1]
-		filepath = os.path.join(update_image_cache,str(startid),name)
-		download_arg.append([url,filepath])
-
-	download_indicator=pool.map(download_shell, download_arg)
-	downloaded = []
-	for i in range(0,len(re)):
-		if download_indicator[i]:
-			downloaded.append(re[i]+(download_arg[i][1],))
-
-	num_downloaded = len(downloaded)
-	print 'downloaded %d images' % num_downloaded
-        flog.write('downloaded %d images' % num_downloaded+'\n')
-
-	if not num_downloaded:
-		exit(-1)
-
-	step_times.append(time.time())
-	print 'Time for downloading images: ', str(step_times[-1]-step_times[-2]), 'seconds'
-        flog.write( 'Time for downloading images: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
+	update_logs_path = os.path.join(update_path,'logs')
+    if not os.path.exists(update_logs_path):
+    	os.mkdir(update_logs_path)
+    update_logfilename = os.path.join(update_logs_path,update_suffix+'.log')
+    flog = open(update_logfilename,'w')
+	
+	if not input_dir: # We downloaded images
+		flog.write('retrived %d image URLs' % num_url+'\n')
+		flog.write('after remove existing: %d image URLs' % num_ex+'\n')
+		flog.write('Time for getting urls: '+ str(step_times[-2]-step_times[-3])+ ' seconds\n')
+		flog.write('downloaded %d images' % num_downloaded+'\n')
+		flog.write('Time for downloading images: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
+	else: 
 
 	# image integrity check
 	readable_images = []
@@ -264,7 +278,7 @@ if __name__ == '__main__':
 
 	step_times.append(time.time())
 	print 'Time for computing sha1: ', str(step_times[-1]-step_times[-2]), 'seconds'	
-        flog.write('Time for computing sha1: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
+	flog.write('Time for computing sha1: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
 
 	# get unique images 
 	sha1_list = [img_item[3] for img_item in readable_images]
@@ -318,11 +332,11 @@ if __name__ == '__main__':
 
 	num_new_unique=len(new_files)
 	print 'new unique images: %d' % num_new_unique
-        flog.write( 'new unique images: %d' % num_new_unique + '\n')
+	flog.write( 'new unique images: %d' % num_new_unique + '\n')
 
 	step_times.append(time.time())
 	print 'Time for getting unique images: ', str(step_times[-1]-step_times[-2]), 'seconds'	
-        flog.write('Time for getting unique images: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
+	flog.write('Time for getting unique images: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
 
 	if num_new_unique:
 	# extract features for unique images
