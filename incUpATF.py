@@ -42,8 +42,8 @@ def copy_images(in_dir, out_dir):
                         return_code = sub.call(command, shell=True)
                         if return_code_conv == 0:
                             downloaded.append(('', '', os.path.join(out_dir, tmp_file)))
-        else:
-            downloaded.append(('', '', os.path.join(out_dir, one_file)))
+                    else:
+                        downloaded.append(('', '', os.path.join(out_dir, one_file)))
     return downloaded
 
 
