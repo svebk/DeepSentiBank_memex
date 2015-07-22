@@ -40,10 +40,11 @@ def copy_images(in_dir, out_dir):
                         return_code_conv = sub.call(command, shell=True)
                         command = "rm " + os.path.join(out_dir, one_file)
                         return_code = sub.call(command, shell=True)
+                        # beware of unicode strings...
                         if return_code_conv == 0:
-                            downloaded.append(('', '', os.path.join(out_dir, tmp_file)))
+                            downloaded.append(('', '', str(os.path.join(out_dir, tmp_file))))
                     else:
-                        downloaded.append(('', '', os.path.join(out_dir, one_file)))
+                        downloaded.append(('', '', str(os.path.join(out_dir, one_file))))
     return downloaded
 
 
@@ -442,7 +443,7 @@ if __name__ == '__main__':
         c = db.cursor()
         if num_new_unique:
             insert_statement = "INSERT IGNORE INTO uniqueIds (htid, location, sha1) VALUES {}".format(
-                ','.join(map(str, new_uniques)))
+                    ','.join(map(str, new_uniques)))
             c.execute(insert_statement)
         insert_statement = "INSERT IGNORE INTO fullIds (htid, uid) VALUES {}".format(','.join(map(str, new_fulls)))
         c.execute(insert_statement)
