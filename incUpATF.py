@@ -20,7 +20,6 @@ accepted_img_types = global_var['accepted_img_types']
 caffe_img_type = global_var['caffe_img_type']
 demo = global_var['demo']
 
-
 # Copy functions
 def copy_images(in_dir, out_dir):
     downloaded = []
@@ -436,31 +435,30 @@ if __name__ == '__main__':
         os.remove(featurefilename)
         step_times.append(time.time())
         print 'Time for updating the features and hash bits: ', str(step_times[-1] - step_times[-2]), 'seconds'
-        flog.write(
-            'Time for updating the features and hash bits: ' + str(step_times[-1] - step_times[-2]) + ' seconds\n')
+        flog.write('Time for updating the features and hash bits: ' + str(step_times[-1] - step_times[-2]) + ' seconds\n')
 
-    #update MySQL
-    db = MySQLdb.connect(host=localhost, user=localuser, passwd=localpwd, db=localdb)
-    c = db.cursor()
-    if num_new_unique:
-        insert_statement = "INSERT IGNORE INTO uniqueIds (htid, location, sha1) VALUES {}".format(
-            ','.join(map(str, new_uniques)))
+        #update MySQL
+        db = MySQLdb.connect(host=localhost, user=localuser, passwd=localpwd, db=localdb)
+        c = db.cursor()
+        if num_new_unique:
+            insert_statement = "INSERT IGNORE INTO uniqueIds (htid, location, sha1) VALUES {}".format(
+                ','.join(map(str, new_uniques)))
+            c.execute(insert_statement)
+        insert_statement = "INSERT IGNORE INTO fullIds (htid, uid) VALUES {}".format(','.join(map(str, new_fulls)))
         c.execute(insert_statement)
-    insert_statement = "INSERT IGNORE INTO fullIds (htid, uid) VALUES {}".format(','.join(map(str, new_fulls)))
-    c.execute(insert_statement)
-    c.execute('select id from uniqueIds ORDER BY id DESC limit 1;')
-    remax = c.fetchall()
-    if len(remax):
-        umax_new = int(remax[0][0])
-    else:
-        umax_new = 0
+        c.execute('select id from uniqueIds ORDER BY id DESC limit 1;')
+        remax = c.fetchall()
+        if len(remax):
+            umax_new = int(remax[0][0])
+        else:
+            umax_new = 0
 
-    c.execute('select id from fullIds ORDER BY id DESC limit 1;')
-    remax = c.fetchall()
-    if len(remax):
-        fmax_new = int(remax[0][0])
-    else:
-        fmax_new = 0
+        c.execute('select id from fullIds ORDER BY id DESC limit 1;')
+        remax = c.fetchall()
+        if len(remax):
+            fmax_new = int(remax[0][0])
+        else:
+            fmax_new = 0
 
     success = 0
     if umax_new - umax != num_new_unique:
@@ -478,6 +476,7 @@ if __name__ == '__main__':
     else:
         success = 1
         db.commit()
+
     db.close()
     step_times.append(time.time())
     print 'Time for updating database: ', str(step_times[-1] - step_times[-2]), 'seconds'
@@ -510,5 +509,4 @@ if __name__ == '__main__':
 
         #vmtouch folder
         os.system('./cache.sh')
-        exit(0)
-
+        sys.exit(0)
