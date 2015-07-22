@@ -351,7 +351,7 @@ if __name__ == '__main__':
     new_fulls = []
     for i in range(0, num_readable):
         if demo: # Local images
-            img_item = readable_images[unique_idx[i]]
+            img_item = readable_images[i]
             location=img_item[2]
             new_fulls.append((startid + i, unique_htid[full_idx[i]], location))
         else:
