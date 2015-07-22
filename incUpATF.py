@@ -222,7 +222,7 @@ if __name__ == '__main__':
 		print 'downloaded %d images' % num_downloaded
         
 		if not num_downloaded:
-			exit(-1)
+			sys.exit(-1)
 
 		step_times.append(time.time())
 		print 'Time for downloading images: ', str(step_times[-1]-step_times[-2]), 'seconds'
@@ -272,7 +272,7 @@ if __name__ == '__main__':
 	print 'readable images: %d' % num_readable
         flog.write('readable images: %d' % num_readable + '\n')
 	if not num_readable:
-		exit(-1)
+		sys.exit(-1)
 	step_times.append(time.time())
 	print 'Time for checking integrity: ', str(step_times[-1]-step_times[-2]), 'seconds'	
         flog.write('Time for checking integrity: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
@@ -424,6 +424,7 @@ if __name__ == '__main__':
 		step_times.append(time.time())
 		print 'Time for updating the features and hash bits: ', str(step_times[-1]-step_times[-2]), 'seconds'	
 	        flog.write( 'Time for updating the features and hash bits: '+ str(step_times[-1]-step_times[-2])+ ' seconds\n')
+
 	#update MySQL
 	db=MySQLdb.connect(host=localhost,user=localuser,passwd=localpwd,db=localdb)
 	c=db.cursor()
@@ -476,7 +477,7 @@ if __name__ == '__main__':
 		print 'Total time: ', str(time.time()-step_times[0]), 'seconds'	
 	        flog.write('Total time: '+ str(time.time()-step_times[0])+' seconds\n')
 		flog.close()
-		exit(-1)
+		sys.exit(-1)
 	else:
 		master_update_filepath =  'update_list.txt'
 		with open(master_update_filepath, "a") as f:
