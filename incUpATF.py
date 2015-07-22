@@ -338,7 +338,7 @@ if __name__ == '__main__':
 
 	new_fulls = []
 	for i in range(0,num_readable):
-		new_fulls.append((int(readable_images[i][0]),unique_htid[full_idx[i]]))
+		new_fulls.append((startid+i,unique_htid[full_idx[i]]))
 
 	num_new_unique=len(new_files)
 	print 'new unique images: %d' % num_new_unique
