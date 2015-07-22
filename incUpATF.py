@@ -353,9 +353,9 @@ if __name__ == '__main__':
         if demo: # Local images
             img_item = readable_images[i]
             location=img_item[2]
-            new_fulls.append((startid + i, unique_htid[full_idx[i]], location))
+            new_fulls.append((full_idx[i], unique_htid[full_idx[i]], location))
         else:
-            new_fulls.append((startid + i, unique_htid[full_idx[i]]))
+            new_fulls.append((full_idx[i], unique_htid[full_idx[i]]))
 
     num_new_unique = len(new_files)
     print 'new unique images: %d' % num_new_unique
@@ -471,8 +471,8 @@ if __name__ == '__main__':
             fmax_new = 0
 
     else:
-	umax_new = 0
-	fmax_new = 0
+        umax_new = 0
+        fmax_new = 0
 
     success = 0
     if umax_new - umax != num_new_unique:
