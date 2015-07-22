@@ -337,7 +337,7 @@ if __name__ == '__main__':
                 location=img_item[2]
             else: # URL images
                 location=img_item[1]
-	    print "Location:",location,img_item[1],img_item[2]
+            print "Location:",location,img_item[1],img_item[2]
             if img_item[0]:
                 new_uniques.append((int(img_item[0]), location, img_item[3]))
             else:
@@ -350,7 +350,12 @@ if __name__ == '__main__':
 
     new_fulls = []
     for i in range(0, num_readable):
-        new_fulls.append((startid + i, unique_htid[full_idx[i]]))
+        if demo: # Local images
+            img_item = readable_images[unique_idx[i]]
+            location=img_item[2]
+            new_fulls.append((startid + i, unique_htid[full_idx[i]], location))
+        else:
+            new_fulls.append((startid + i, unique_htid[full_idx[i]]))
 
     num_new_unique = len(new_files)
     print 'new unique images: %d' % num_new_unique
@@ -446,7 +451,10 @@ if __name__ == '__main__':
             insert_statement = "INSERT IGNORE INTO uniqueIds (htid, location, sha1) VALUES {}".format(
                     ','.join(map(str, new_uniques)))
             c.execute(insert_statement)
-        insert_statement = "INSERT IGNORE INTO fullIds (htid, uid) VALUES {}".format(','.join(map(str, new_fulls)))
+        if demo:
+            insert_statement = "INSERT IGNORE INTO fullIds (htid, uid) VALUES {}".format(','.join(map(str, new_fulls)))
+        else:
+            insert_statement = "INSERT IGNORE INTO fullIds (htid, uid, location) VALUES {}".format(','.join(map(str, new_fulls)))
         c.execute(insert_statement)
         c.execute('select id from uniqueIds ORDER BY id DESC limit 1;')
         remax = c.fetchall()
