@@ -452,9 +452,9 @@ if __name__ == '__main__':
                     ','.join(map(str, new_uniques)))
             c.execute(insert_statement)
         if demo:
-            insert_statement = "INSERT IGNORE INTO fullIds (htid, uid) VALUES {}".format(','.join(map(str, new_fulls)))
-        else:
             insert_statement = "INSERT IGNORE INTO fullIds (htid, uid, location) VALUES {}".format(','.join(map(str, new_fulls)))
+        else:
+            insert_statement = "INSERT IGNORE INTO fullIds (htid, uid) VALUES {}".format(','.join(map(str, new_fulls)))
         c.execute(insert_statement)
         c.execute('select id from uniqueIds ORDER BY id DESC limit 1;')
         remax = c.fetchall()
