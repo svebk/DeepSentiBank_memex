@@ -263,6 +263,7 @@ if __name__ == '__main__':
     error_tag = '[ERROR]'
     png_tag = '0x89 0x50'
     unsp_tag = 'Unsupported color conversion request'
+    i = 0
     for img_item in downloaded:
         command = 'jpeginfo -c ' + img_item[2]
         output, error = sub.Popen(command.split(' '), stdout=sub.PIPE, stderr=sub.PIPE).communicate()
@@ -272,6 +273,8 @@ if __name__ == '__main__':
         if output.find(error_tag) >= 0 and output.find(png_tag) < 0 and output.find(unsp_tag) < 0:
             continue
 
+        img_item[0]=start_id+i
+        i+=1
         readable_images.append(img_item)
 
     f.close()
@@ -353,9 +356,9 @@ if __name__ == '__main__':
         if demo: # Local images
             img_item = readable_images[i]
             location=img_item[2]
-            new_fulls.append((full_idx[i], unique_htid[full_idx[i]], location))
+            new_fulls.append((int(readable_images[i][0]), unique_htid[full_idx[i]], location))
         else:
-            new_fulls.append((full_idx[i], unique_htid[full_idx[i]]))
+            new_fulls.append((int(readable_images[i][0]), unique_htid[full_idx[i]]))
 
     num_new_unique = len(new_files)
     print 'new unique images: %d' % num_new_unique
