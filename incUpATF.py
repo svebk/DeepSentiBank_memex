@@ -337,6 +337,7 @@ if __name__ == '__main__':
                 location=img_item[2]
             else: # URL images
                 location=img_item[1]
+	    print "Location:",location,img_item[1],img_item[2]
             if img_item[0]:
                 new_uniques.append((int(img_item[0]), location, img_item[3]))
             else:
@@ -460,6 +461,10 @@ if __name__ == '__main__':
             fmax_new = int(remax[0][0])
         else:
             fmax_new = 0
+
+    else:
+	umax_new = 0
+	fmax_new = 0
 
     success = 0
     if umax_new - umax != num_new_unique:
