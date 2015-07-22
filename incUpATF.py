@@ -494,5 +494,5 @@ if __name__ == '__main__':
 		
 		#vmtouch folder
 		os.system('./cache.sh')
-		exit(0)
+		sys.exit(0)
 
