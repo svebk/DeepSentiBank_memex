@@ -273,8 +273,8 @@ if __name__ == '__main__':
         if output.find(error_tag) >= 0 and output.find(png_tag) < 0 and output.find(unsp_tag) < 0:
             continue
 
-        img_item[0]=start_id+i
         i+=1
+        img_item=(startid+i,)+img_item[1:]
         readable_images.append(img_item)
 
     f.close()

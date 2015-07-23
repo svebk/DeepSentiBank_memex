@@ -78,7 +78,7 @@ $nocache = $_GET['nocache'];
 }
 
 if (empty($image_url)) {
-  echo "<h1>Please provide an image url!</h1>How to use this API:<br/><ul><li>Minimal requirement: an image URL: https://isi.memexproxy.com/ColumbiaUimgSearch.php?url=https://hostingservice.com/image.jpg</li></ul><ul>Other parameters:<li>visualize: 1, 0 [JSON or visualization: default: 0]</li><li>nodup: 1, 0 [remove or display exact duplicate, default: 0]</li><li>num: maximum number of returned images [default: 30, 1000 if neardup activated]</li><li>neardup: 1, 0 [activate near duplicate search, default: 0]</li><li>neardup_type: strict, loose, balanced [default: balanced]</li></ul>Issues, questions or suggestions? Contact us:<ul><li>Svebor Karaman: svebor.karaman@columbia.edu</li><li>Tao Chen: taochen@ee.columbia.edu</li></ul>";
+  echo "<h1>Please provide an image url!</h1>How to use the ATF API:<br/><ul><li>Minimal requirement: an image URL: https://isi.memexproxy.com/ATF/ColumbiaUimgSearch.php?url=https://hostingservice.com/image.jpg</li></ul><ul>Other parameters:<li>visualize: 1, 0 [JSON or visualization: default: 0]</li><li>nodup: 1, 0 [remove or display exact duplicate, default: 0]</li><li>num: maximum number of returned images [default: 30, 1000 if neardup activated]</li><li>neardup: 1, 0 [activate near duplicate search, default: 0]</li><li>neardup_type: strict, loose, balanced [default: balanced]</li></ul>Issues, questions or suggestions? Contact us:<ul><li>Svebor Karaman: svebor.karaman@columbia.edu</li><li>Tao Chen: taochen@ee.columbia.edu</li></ul>";
 }
 if (empty($query_num)) {
   $query_num=30;
@@ -104,10 +104,9 @@ if (empty($neardup_type)) {
 if (empty($nocache)) {
   $nocache = 0;
 }
-if (empty($noblur)) {
-  $noblur = 0;
+if (!is_numeric($noblur)) {
+  $noblur = 1;
 }
-
 $dup = 1;
 $dupstr = '_dup';
 if ($nodup>0){
@@ -213,9 +212,11 @@ $fout = fopen ($outname, "rb");
 
     if ($noblur) {
       $img_style="margin:3;border:0;height:120px;";
+      $dup_style="margin:3;border:0;";
     }
     else {
       $img_style="margin:3;border:0;height:120px;-webkit-filter: blur(6px);";
+      $dup_style="margin:3;border:0;-webkit-filter: blur(6px);";
     }
 
     echo '<font size="6"><b>Query Image</b></font><br><a href="'.$image_url.'"><img src="'.$image_url.'" style="'.$img_style.'" title="Query Image"></a><br><br><font size="6"><b>Query Results:</b><br>';
@@ -226,7 +227,7 @@ $fout = fopen ($outname, "rb");
     $distlist = $obj->{'images'}[0]->{'similar_images'}->{'distance'};
 
     for ($i=0; $i<sizeof($imglist); $i++) {
-      $dupurl = 'getDuplicate.php?htid='.$uidlist[$i].'&visualize=1';
+      $dupurl = 'getDuplicate.php?htid='.$uidlist[$i].'&visualize=1&style='.$dup_style.'';
       echo '<a href="'.$dupurl.'"><img src="'.$imglist[$i].'" style="'.$img_style.'" origin="'.$orilist[$i].'" title="'.$distlist[$i].'" style="-webkit-filter: blur(5px);"></a>';
     }
 	}
