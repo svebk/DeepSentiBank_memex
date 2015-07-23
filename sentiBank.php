@@ -26,7 +26,13 @@ function downloadFile ($url, $path) {
  }
 $mainpath = '/home/ubuntu/memex/';
 $savepath = $mainpath . 'img/';
+
+if (PHP_SAPI === 'cli') {
+parse_str(implode('&', array_slice($argv, 1)), $_GET);
+}
+ 
 $image_url = $_GET['url'];
+
 $name = basename($image_url);
 $fullname = $savepath . $name;
 $pos = strrpos($fullname, ".");
